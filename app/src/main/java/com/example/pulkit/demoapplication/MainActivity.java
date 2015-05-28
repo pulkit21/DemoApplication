@@ -1,38 +1,86 @@
 package com.example.pulkit.demoapplication;
 
+import android.content.Context;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit.RestAdapter;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    ListView lvGitUser;
+    ArrayAdapter<User> adapter;
+    List<User> gitUsers;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.main);
+        gitUsers = new ArrayList<>();
+        lvGitUser = (ListView) findViewById(R.id.lvGitUser);
+        adapter = new UserAdapter(this, R.layout.user_profile, gitUsers);
+        lvGitUser.setAdapter(adapter);
+        new FetechUserTask().execute();
+
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+    public class FetechUserTask extends AsyncTask<Void, Void, List<User>> {
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        @Override
+        protected List<User> doInBackground(Void... params) {
+            RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint("https://api.github.com").build();
+            GithubUserService githubUserService = restAdapter.create(GithubUserService.class);
+            return githubUserService.getUsers();
         }
 
-        return super.onOptionsItemSelected(item);
+        @Override
+        protected void onPostExecute(List<User> users) {
+            super.onPostExecute(users);
+            gitUsers.addAll(users);
+            adapter.notifyDataSetChanged();
+
+        }
     }
+
+    public class UserAdapter extends ArrayAdapter<User> {
+        LayoutInflater layoutInflater;
+        public UserAdapter(Context context, int resource, List<User> objects) {
+            super(context, resource, objects);
+            layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View userItemView = convertView;
+            if (userItemView == null) {
+                userItemView = layoutInflater.inflate(R.layout.user_profile,parent,false);
+            }
+            ImageView userImage = (ImageView) userItemView.findViewById(R.id.userImage);
+            TextView userName = (TextView) userItemView.findViewById(R.id.userName);
+            User user = getItem(position);
+
+            Picasso.with(getContext()).load(user.avatar_url).into(userImage);
+            userName.setText(user.login);
+
+            return userItemView;
+        }
+    }
+
+
 }
