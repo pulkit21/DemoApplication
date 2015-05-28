@@ -9,10 +9,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -22,7 +24,7 @@ import java.util.List;
 import retrofit.RestAdapter;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     ListView lvGitUser;
     ArrayAdapter<User> adapter;
@@ -36,11 +38,12 @@ public class MainActivity extends AppCompatActivity {
         lvGitUser = (ListView) findViewById(R.id.lvGitUser);
         adapter = new UserAdapter(this, R.layout.user_profile, gitUsers);
         lvGitUser.setAdapter(adapter);
-        new FetechUserTask().execute();
+        lvGitUser.setOnItemClickListener(this);
+        new FetchUserTask().execute();
 
     }
 
-    public class FetechUserTask extends AsyncTask<Void, Void, List<User>> {
+    public class FetchUserTask extends AsyncTask<Void, Void, List<User>> {
 
         @Override
         protected List<User> doInBackground(Void... params) {
@@ -82,5 +85,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        User user = (User) ((ListView) parent).getAdapter().getItem(position);
+        Toast.makeText(this, user.login, Toast.LENGTH_SHORT).show();
+    }
 
 }
